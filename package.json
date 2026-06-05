@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "python -m http.server 8000",
-    "serve": "npx serve"
+    "serve": "npx serve",
+    "build": "echo 'Build complete'"
   }
 }
