@@ -57,10 +57,21 @@
       min-height: 120px; border-radius: 18px; padding: 12px; border: 1px solid var(--border);
       background: var(--panel); box-shadow: var(--shadow); position: relative; overflow: hidden;
       display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 1;
     }
     .tile::after {
       content: ''; position: absolute; inset: auto -20% -40% auto; width: 90px; height: 90px;
       background: rgba(255,255,255,.06); border-radius: 50%; filter: blur(2px);
+    }
+    .tile:hover {
+      transform: translateY(-12px) scale(1.02);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+    .tile:active {
+      transform: translateY(-6px) scale(1.01);
     }
     .cat-foundation { background: linear-gradient(180deg, rgba(47,111,237,.28), rgba(22,26,34,.96)); }
     .cat-generation { background: linear-gradient(180deg, rgba(124,58,237,.28), rgba(22,26,34,.96)); }
@@ -79,8 +90,56 @@
       margin-top: 18px; display: grid; gap: 8px; color: var(--muted); font-size: .95rem;
       background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 18px; padding: 18px;
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1; pointer-events: all;
+    }
+    .modal {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
+      border: 1px solid var(--border); border-radius: 24px; padding: 32px;
+      max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+      transform: scale(0.95) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.active .modal {
+      transform: scale(1) translateY(0);
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px; background: none; border: none;
+      color: var(--muted); cursor: pointer; font-size: 24px;
+      transition: color 0.2s ease;
+    }
+    .modal-close:hover {
+      color: var(--text);
+    }
+    .modal-header {
+      display: grid; gap: 8px; margin-bottom: 20px;
+    }
+    .modal-num { font-size: .85rem; color: rgba(255,255,255,.68); font-weight: 500; }
+    .modal-sym { font-size: 2.2rem; font-weight: 800; letter-spacing: -.05em; }
+    .modal-title { font-size: 1.4rem; font-weight: 700; }
+    .modal-content {
+      display: grid; gap: 16px;
+    }
+    .modal-desc {
+      font-size: 1rem; color: var(--muted); line-height: 1.6;
+    }
+
     @media (max-width: 1200px) { .table { grid-template-columns: repeat(5, minmax(120px, 1fr)); } }
-    @media (max-width: 700px) { .table { grid-template-columns: repeat(2, minmax(140px, 1fr)); } .wrap { padding: 16px; } }
+    @media (max-width: 700px) { 
+      .table { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .wrap { padding: 16px; }
+      .modal { padding: 24px; max-width: 95%; }
+    }
   </style>
 </head>
 <body>
@@ -88,7 +147,7 @@
     <section class="hero">
       <div class="band">2024–2026 vocabulary map</div>
       <h1>The Periodic Table of Agentic &amp; GenAI</h1>
-      <div class="sub">A periodic-table-style map of the most useful concepts across LLM foundations, generation, RAG, agents, evaluation, safety, and deployment. Each tile is a keyword cluster, not a chemistry element.</div>
+      <div class="sub">A periodic-table-style map of the most useful concepts across LLM foundations, generation, RAG, agents, evaluation, safety, and deployment. Each tile is a keyword cluster, navigable by topic and category.</div>
       <div class="legend">
         <span class="pill"><span class="dot" style="background:var(--foundation)"></span>Foundation</span>
         <span class="pill"><span class="dot" style="background:var(--generation)"></span>Generation</span>
@@ -101,53 +160,53 @@
     </section>
 
     <section class="table">
-      <article class="tile cat-foundation"><div class="num">01</div><div class="sym">LLM</div><div class="name">Large Language Model</div><div class="desc">Neural model trained on massive text corpora for generation and language tasks.</div><div class="band">Foundation</div></article>
-      <article class="tile cat-foundation"><div class="num">02</div><div class="sym">Tr</div><div class="name">Transformer</div><div class="desc">Architecture behind modern language models, built around attention.</div><div class="band">Foundation</div></article>
-      <article class="tile cat-foundation"><div class="num">03</div><div class="sym">At</div><div class="name">Attention</div><div class="desc">Mechanism that weighs token relationships across a sequence.</div><div class="band">Foundation</div></article>
-      <article class="tile cat-foundation"><div class="num">04</div><div class="sym">Tk</div><div class="name">Tokenization</div><div class="desc">Breaking text into tokens the model can process.</div><div class="band">Foundation</div></article>
-      <article class="tile cat-foundation"><div class="num">05</div><div class="sym">Inf</div><div class="name">Inference</div><div class="desc">Running a model to predict the next token and generate output.</div><div class="band">Foundation</div></article>
+      <article class="tile cat-foundation"><div class="num">01</div><div class="sym">LLM</div><div class="name">Large Language Model</div><div class="desc">Neural model trained on massive text corpora.</div></article>
+      <article class="tile cat-foundation"><div class="num">02</div><div class="sym">Tr</div><div class="name">Transformer</div><div class="desc">Architecture behind modern language models, built on attention.</div></article>
+      <article class="tile cat-foundation"><div class="num">03</div><div class="sym">At</div><div class="name">Attention</div><div class="desc">Mechanism that weighs token relationships across a sequence.</div></article>
+      <article class="tile cat-foundation"><div class="num">04</div><div class="sym">Tk</div><div class="name">Tokenization</div><div class="desc">Breaking text into tokens the model can process.</div></article>
+      <article class="tile cat-foundation"><div class="num">05</div><div class="sym">Inf</div><div class="name">Inference</div><div class="desc">Running a model to predict the next token and generate output.</div></article>
 
-      <article class="tile cat-generation"><div class="num">06</div><div class="sym">Pr</div><div class="name">Prompt Engineering</div><div class="desc">Crafting instructions, format, and examples to guide outputs.</div><div class="band">Generation</div></article>
-      <article class="tile cat-generation"><div class="num">07</div><div class="sym">FS</div><div class="name">Few-Shot</div><div class="desc">Giving examples in the prompt to improve task performance.</div><div class="band">Generation</div></article>
-      <article class="tile cat-generation"><div class="num">08</div><div class="sym">FT</div><div class="name">Fine-Tuning</div><div class="desc">Adapting a pretrained model on narrower task data.</div><div class="band">Generation</div></article>
-      <article class="tile cat-generation"><div class="num">09</div><div class="sym">Tmp</div><div class="name">Temperature</div><div class="desc">Controls randomness during generation.</div><div class="band">Generation</div></article>
-      <article class="tile cat-generation"><div class="num">10</div><div class="sym">MM</div><div class="name">Multimodal</div><div class="desc">Models that process or generate text, image, audio, or video together.</div><div class="band">Generation</div></article>
+      <article class="tile cat-generation"><div class="num">06</div><div class="sym">Pr</div><div class="name">Prompt Engineering</div><div class="desc">Crafting instructions, format, and examples for better results.</div></article>
+      <article class="tile cat-generation"><div class="num">07</div><div class="sym">FS</div><div class="name">Few-Shot</div><div class="desc">Giving examples in the prompt to improve task performance.</div></article>
+      <article class="tile cat-generation"><div class="num">08</div><div class="sym">FT</div><div class="name">Fine-Tuning</div><div class="desc">Adapting a pretrained model on narrower task data.</div></article>
+      <article class="tile cat-generation"><div class="num">09</div><div class="sym">Tmp</div><div class="name">Temperature</div><div class="desc">Controls randomness during generation.</div></article>
+      <article class="tile cat-generation"><div class="num">10</div><div class="sym">MM</div><div class="name">Multimodal</div><div class="desc">Models that process or generate text, image, audio, or video.</div></article>
 
-      <article class="tile cat-retrieval"><div class="num">11</div><div class="sym">RAG</div><div class="name">Retrieval-Augmented Generation</div><div class="desc">Grounds model output with external retrieved context.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-retrieval"><div class="num">12</div><div class="sym">Emb</div><div class="name">Embeddings</div><div class="desc">Dense vector representations that capture semantic meaning.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-retrieval"><div class="num">13</div><div class="sym">VDB</div><div class="name">Vector Database</div><div class="desc">Stores and queries high-dimensional vectors for similarity search.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-retrieval"><div class="num">14</div><div class="sym">Ch</div><div class="name">Chunking</div><div class="desc">Splitting content into smaller retrieval units.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-retrieval"><div class="num">15</div><div class="sym">Hy</div><div class="name">Hybrid Search</div><div class="desc">Combines semantic and keyword search.</div><div class="band">Retrieval</div></article>
+      <article class="tile cat-retrieval"><div class="num">11</div><div class="sym">RAG</div><div class="name">Retrieval-Augmented Generation</div><div class="desc">Grounds model output with external knowledge sources.</div></article>
+      <article class="tile cat-retrieval"><div class="num">12</div><div class="sym">Emb</div><div class="name">Embeddings</div><div class="desc">Dense vector representations that capture semantic meaning.</div></article>
+      <article class="tile cat-retrieval"><div class="num">13</div><div class="sym">VDB</div><div class="name">Vector Database</div><div class="desc">Stores and queries high-dimensional vectors efficiently.</div></article>
+      <article class="tile cat-retrieval"><div class="num">14</div><div class="sym">Ch</div><div class="name">Chunking</div><div class="desc">Splitting content into smaller retrieval units.</div></article>
+      <article class="tile cat-retrieval"><div class="num">15</div><div class="sym">Hy</div><div class="name">Hybrid Search</div><div class="desc">Combines semantic and keyword search strategies.</div></article>
 
-      <article class="tile cat-retrieval"><div class="num">16</div><div class="sym">RR</div><div class="name">Reranking</div><div class="desc">Reorders retrieved results for stronger relevance.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-retrieval"><div class="num">17</div><div class="sym">MMR</div><div class="name">Max Marginal Relevance</div><div class="desc">Balances relevance with diversity in retrieved chunks.</div><div class="band">Retrieval</div></article>
-      <article class="tile cat-agentic"><div class="num">18</div><div class="sym">Ag</div><div class="name">Agent</div><div class="desc">LLM-based system with goals, tools, memory, and actions.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">19</div><div class="sym">AR</div><div class="name">Agentic RAG</div><div class="desc">RAG enhanced with tool use, planning, and validation loops.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">20</div><div class="sym">ReA</div><div class="name">ReAct</div><div class="desc">Reason + Act loop: thought, action, observation, repeat.</div><div class="band">Agentic</div></article>
+      <article class="tile cat-retrieval"><div class="num">16</div><div class="sym">RR</div><div class="name">Reranking</div><div class="desc">Reorders retrieved results for stronger relevance.</div></article>
+      <article class="tile cat-retrieval"><div class="num">17</div><div class="sym">MMR</div><div class="name">Max Marginal Relevance</div><div class="desc">Balances relevance with diversity in results.</div></article>
+      <article class="tile cat-agentic"><div class="num">18</div><div class="sym">Ag</div><div class="name">Agent</div><div class="desc">LLM-based system with goals, tools, memory, and actions.</div></article>
+      <article class="tile cat-agentic"><div class="num">19</div><div class="sym">AR</div><div class="name">Agentic RAG</div><div class="desc">RAG enhanced with tool use, planning, and validation.</div></article>
+      <article class="tile cat-agentic"><div class="num">20</div><div class="sym">ReA</div><div class="name">ReAct</div><div class="desc">Reason + Act loop: thought, action, observation, repeat.</div></article>
 
-      <article class="tile cat-agentic"><div class="num">21</div><div class="sym">Pln</div><div class="name">Planning</div><div class="desc">Breaking a task into steps before acting.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">22</div><div class="sym">TUl</div><div class="name">Tool Use</div><div class="desc">Calling APIs, search, calculators, or software functions.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">23</div><div class="sym">Fn</div><div class="name">Function Calling</div><div class="desc">Structured way for models to invoke external tools.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">24</div><div class="sym">Mem</div><div class="name">Memory</div><div class="desc">Short-term and long-term state used across steps or sessions.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">25</div><div class="sym">Rt</div><div class="name">Router</div><div class="desc">Selects the best tool, agent, or knowledge source.</div><div class="band">Agentic</div></article>
+      <article class="tile cat-agentic"><div class="num">21</div><div class="sym">Pln</div><div class="name">Planning</div><div class="desc">Breaking a task into steps before acting.</div></article>
+      <article class="tile cat-agentic"><div class="num">22</div><div class="sym">TUl</div><div class="name">Tool Use</div><div class="desc">Calling APIs, search, calculators, or software functions.</div></article>
+      <article class="tile cat-agentic"><div class="num">23</div><div class="sym">Fn</div><div class="name">Function Calling</div><div class="desc">Structured way for models to invoke external tools.</div></article>
+      <article class="tile cat-agentic"><div class="num">24</div><div class="sym">Mem</div><div class="name">Memory</div><div class="desc">Short-term and long-term state across interactions.</div></article>
+      <article class="tile cat-agentic"><div class="num">25</div><div class="sym">Rt</div><div class="name">Router</div><div class="desc">Selects the best tool, agent, or knowledge source.</div></article>
 
-      <article class="tile cat-agentic"><div class="num">26</div><div class="sym">MAS</div><div class="name">Multi-Agent System</div><div class="desc">Multiple specialized agents coordinate on a task.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">27</div><div class="sym">Obs</div><div class="name">Observation</div><div class="desc">Feedback an agent receives after acting.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-agentic"><div class="num">28</div><div class="sym">Ref</div><div class="name">Reflection</div><div class="desc">Self-critique or re-evaluation to improve the next step.</div><div class="band">Agentic</div></article>
-      <article class="tile cat-ops"><div class="num">29</div><div class="sym">Eval</div><div class="name">Evaluation</div><div class="desc">Measures whether retrieval or generation quality is actually good.</div><div class="band">Ops/Evals</div></article>
-      <article class="tile cat-ops"><div class="num">30</div><div class="sym">RGE</div><div class="name">RAG Evaluation</div><div class="desc">Assesses retrieval quality and grounded answer quality.</div><div class="band">Ops/Evals</div></article>
+      <article class="tile cat-agentic"><div class="num">26</div><div class="sym">MAS</div><div class="name">Multi-Agent System</div><div class="desc">Multiple specialized agents coordinate on a task.</div></article>
+      <article class="tile cat-agentic"><div class="num">27</div><div class="sym">Obs</div><div class="name">Observation</div><div class="desc">Feedback an agent receives after acting.</div></article>
+      <article class="tile cat-agentic"><div class="num">28</div><div class="sym">Ref</div><div class="name">Reflection</div><div class="desc">Self-critique or re-evaluation to improve outcomes.</div></article>
+      <article class="tile cat-ops"><div class="num">29</div><div class="sym">Eval</div><div class="name">Evaluation</div><div class="desc">Measures whether retrieval or generation quality meets needs.</div></article>
+      <article class="tile cat-ops"><div class="num">30</div><div class="sym">RGE</div><div class="name">RAG Evaluation</div><div class="desc">Assesses retrieval quality and grounded answer relevance.</div></article>
 
-      <article class="tile cat-ops"><div class="num">31</div><div class="sym">Exp</div><div class="name">Explainability</div><div class="desc">Showing sources or reasoning traces behind an answer.</div><div class="band">Ops/Evals</div></article>
-      <article class="tile cat-safety"><div class="num">32</div><div class="sym">Hal</div><div class="name">Hallucination</div><div class="desc">Fluent output that is wrong, unsupported, or fabricated.</div><div class="band">Safety</div></article>
-      <article class="tile cat-safety"><div class="num">33</div><div class="sym">Grd</div><div class="name">Guardrails</div><div class="desc">Rules and constraints that keep outputs and actions safe.</div><div class="band">Safety</div></article>
-      <article class="tile cat-safety"><div class="num">34</div><div class="sym">HITL</div><div class="name">Human-in-the-Loop</div><div class="desc">Human review or intervention inside an automated workflow.</div><div class="band">Safety</div></article>
-      <article class="tile cat-infra"><div class="num">35</div><div class="sym">OSS</div><div class="name">Open-Source LLM</div><div class="desc">Model with publicly available weights for local or commercial use.</div><div class="band">Infra</div></article>
+      <article class="tile cat-ops"><div class="num">31</div><div class="sym">Exp</div><div class="name">Explainability</div><div class="desc">Showing sources or reasoning traces behind outputs.</div></article>
+      <article class="tile cat-safety"><div class="num">32</div><div class="sym">Hal</div><div class="name">Hallucination</div><div class="desc">Fluent output that is wrong, unsupported, or fabricated.</div></article>
+      <article class="tile cat-safety"><div class="num">33</div><div class="sym">Grd</div><div class="name">Guardrails</div><div class="desc">Rules and constraints that keep outputs and actions safe.</div></article>
+      <article class="tile cat-safety"><div class="num">34</div><div class="sym">HITL</div><div class="name">Human-in-the-Loop</div><div class="desc">Human review or intervention inside automated workflows.</div></article>
+      <article class="tile cat-infra"><div class="num">35</div><div class="sym">OSS</div><div class="name">Open-Source LLM</div><div class="desc">Model with publicly available weights for local operation.</div></article>
 
-      <article class="tile cat-infra"><div class="num">36</div><div class="sym">Ctx</div><div class="name">Context Window</div><div class="desc">Maximum information a model can consider in one pass.</div><div class="band">Infra</div></article>
-      <article class="tile cat-infra"><div class="num">37</div><div class="sym">Lat</div><div class="name">Latency</div><div class="desc">Delay between input and usable model response.</div><div class="band">Infra</div></article>
-      <article class="tile cat-infra"><div class="num">38</div><div class="sym">A2A</div><div class="name">Agent-to-Agent</div><div class="desc">Protocols or coordination patterns for agents to communicate.</div><div class="band">Infra</div></article>
-      <article class="tile cat-infra"><div class="num">39</div><div class="sym">Wrk</div><div class="name">Workflow</div><div class="desc">Structured sequence of model, tool, and human steps.</div><div class="band">Infra</div></article>
-      <article class="tile cat-infra"><div class="num">40</div><div class="sym">Orc</div><div class="name">Orchestration</div><div class="desc">Coordinating agents, tools, prompts, and control flow.</div><div class="band">Infra</div></article>
+      <article class="tile cat-infra"><div class="num">36</div><div class="sym">Ctx</div><div class="name">Context Window</div><div class="desc">Maximum information a model can consider in one pass.</div></article>
+      <article class="tile cat-infra"><div class="num">37</div><div class="sym">Lat</div><div class="name">Latency</div><div class="desc">Delay between input and usable model response.</div></article>
+      <article class="tile cat-infra"><div class="num">38</div><div class="sym">A2A</div><div class="name">Agent-to-Agent</div><div class="desc">Protocols or coordination patterns for agents to communicate.</div></article>
+      <article class="tile cat-infra"><div class="num">39</div><div class="sym">Wrk</div><div class="name">Workflow</div><div class="desc">Structured sequence of model, tool, and human steps.</div></article>
+      <article class="tile cat-infra"><div class="num">40</div><div class="sym">Orc</div><div class="name">Orchestration</div><div class="desc">Coordinating agents, tools, prompts, and control flows.</div></article>
     </section>
 
     <section class="footer">
@@ -155,5 +214,22 @@
       <div><strong>Best for:</strong> LinkedIn posts, interview prep, workshop slides, personal notes, and a portfolio visual about the GenAI landscape.</div>
     </section>
   </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <div class="modal-header">
+        <div class="modal-num" id="modalNum"></div>
+        <div class="modal-sym" id="modalSym"></div>
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+      <div class="modal-content">
+        <p class="modal-desc" id="modalDesc"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
